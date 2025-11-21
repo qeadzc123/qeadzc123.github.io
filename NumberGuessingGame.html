@@ -76,7 +76,7 @@
     </section>
 
     <!-- Setting -->
-    <section id="#setting" class="hero_setting">
+    <section id="#setting" class="hero_setting" style="display: block;">
         <h2 style="color: #000000;">設定數字範圍</h2>
 
         <!-- 範圍輸入框 -->
@@ -88,7 +88,7 @@
 
         <div class="d-flex flex-column align-items-center gap-2 mt-4" style="max-width: 300px; margin: 0 auto;">
             <h3 class="text-center" style="color: #000000;">目標數字&範圍<br>（僅限 .txt）:</h3>
-            <input type="file" class="form-control" accept=".txt">
+            <input type="file" id="setting_number_range" class="form-control" accept=".txt" >
         </div>
 
         <!-- 按鈕 -->
@@ -140,9 +140,13 @@
                 <button class="btn btn-primary" id="guessBtn">猜</button>
             </div>
 
-            <!-- 顯示結果訊息 -->
-            <p class="text-center mt-3" id="guessResult"></p>
-
+            <!-- 顯示結果訊息 -->          
+            <div class="d-flex flex-column align-items-center gap-2 mt-4">
+                <h3 class="text-center mt-3" id="guessResult"></h3>
+                <button class="btn btn-light btn-lg mt-3" id="restartGameBtn" style="display: none;">
+                    重新開始
+                </button>
+            </div>
         </div>
 
     </section>
@@ -152,60 +156,173 @@
     <!-- 按鈕點擊事件 -->
     <script>
         // 選取物件
+        const setting = document.getElementById('#setting');
         const settingNumberMin = document.getElementById('setting_number_min');
         const settingNumberMax = document.getElementById('setting_number_max');
+        const settingNumberRange = document.getElementById('setting_number_range');
         const startBtn = document.getElementById('startGameBtn');
         const startResult = document.getElementById('startResult');
 
         const gameNumberMin = document.getElementById('game_number_min');
         const gameNumberMax = document.getElementById('game_number_max');
+        let gameTargetNumber;
+        //const gameTargetRange = -1;
         const guessInput = document.getElementById('guessInput');
         const guessBtn = document.getElementById('guessBtn');       
         const guessResult = document.getElementById('guessResult');
 
+        const restartBtn = document.getElementById('restartGameBtn');
+
         // 開始遊戲 按鈕點擊事件
         startBtn.addEventListener('click', function (event) {
             // 確認數字
-            if (settingNumberMin.value === "") {
+            if (settingNumberMin.value === "")
+            {
                 startResult.textContent = "數字的最小值為空白！";
             }
-            else if (settingNumberMax.value === "") {
+            else if (settingNumberMax.value === "")
+            {
                 startResult.textContent = "數字的最大值為空白！";
             }
+            else if (settingNumberRange.files.length <= 0)
+            {
+                startResult.textContent = "目標數字沒有選擇檔案！";
+            }
+            else if (settingNumberRange.files[0].type !== "text/plain")
+            {
+                startResult.textContent = "目標數字&範圍所選擇的檔案不是 .txt！";
+            }
+            else 
+            {   
+                readTxt(settingNumberRange.files[0], settingNumberMin.value, settingNumberMax.value, function (ok) {
+                    if (!ok) {
+                        startResult.textContent = ".txt 檔案有問題！";
+                    } else {
+                        // 將按鈕設為禁用
+                        startBtn.disabled = true;
+                        // 將數字範圍輸入框禁用
+                        settingNumberMin.disabled = true;
+                        settingNumberMax.disabled = true;
+                        settingNumberRange.disabled = true;
+                        // 設定 錯誤提示
+                        startResult.textContent = "";
+                        // 設定 數字範圍
+                        gameNumberMin.value = settingNumberMin.value;
+                        gameNumberMax.value = settingNumberMax.value;
+                        // 設定 猜的輸入、按鈕與結果
+                        guessInput.value = "";
+                        guessBtn.disabled = false;
+                        guessResult.textContent = "按下\"猜\"開始猜數字吧～";
+                        // 隱藏設定數字範圍
+                        setting.style.display = 'none';
+                        // 隱藏開始遊戲前文字
+                        document.getElementById('beforeGame').style.display = 'none';
+                        // 顯示開始遊戲後內容
+                        document.getElementById('afterGame').style.display = 'block';
 
-
-            // 隱藏開始遊戲前文字
-            document.getElementById('beforeGame').style.display = 'none';
-            // 顯示開始遊戲後內容
-            document.getElementById('afterGame').style.display = 'block';
-            // 將按鈕設為禁用
-            startBtn.disabled = true;
-            // 將數字範圍輸入框禁用
-            settingNumberMin.disabled = true;
-            settingNumberMax.disabled = true;
-            // 改變按鈕文字
-            startBtn.textContent = '遊戲已開始';
-            // 設定 最小數字範圍
-            gameNumberMin.value = settingNumberMin.value;
-            // 設定 最大數字範圍
-            gameNumberMax.value = settingNumberMax.value;
-
-            // 跳轉到遊戲區
-            document.getElementById('#game').scrollIntoView({ behavior: 'smooth' });
+                        restartBtn.style.display = 'none';
+                        // 跳轉到遊戲區
+                        document.getElementById('#game').scrollIntoView({ behavior: 'smooth' });
+                    }
+                });                   
+            }          
         });
 
         // 猜 按鈕點擊事件
         guessBtn.addEventListener('click', function (event) {
-            const min = parseInt(gameNumberMin.value, 10);
-            const max = parseInt(gameNumberMax.value, 10);
-            const val = parseInt(guessInput.value, 10);
-
-            if (val === "") {
-                guessResult.textContent = "數字範圍：" + min + " ~ " + max + "\n輸入框是空的！";
+            let min = parseInt(gameNumberMin.value, 10);
+            let max = parseInt(gameNumberMax.value, 10);
+            if (guessInput.value === "") {
+                guessResult.textContent = "你沒有猜數字！";
             }
+            else
+            {
+                let guess = parseInt(guessInput.value, 10);
+                if (guess <= min || guess >= max) {
+                    guessResult.textContent = "你猜到範圍之外了！";
+                }
+                else if (guess != gameTargetNumber) {
+                    if (guess > gameTargetNumber) {
+                        gameNumberMax.value = guess;
+                    } else {
+                        gameNumberMin.value = guess;
+                    }
+                    guessResult.textContent = "你猜錯了呦～  " + "目前的範圍：" + gameNumberMin.value + "~" + gameNumberMax.value;
+                }
+                else {
+                    guessResult.textContent = "恭喜你猜到了！  終極密碼：" + gameTargetNumber;
+                    guessBtn.disabled = true;
+                    restartBtn.style.display = 'block';
+                }
 
-            //guessResult.textContent = "數字範圍：" + min + " ~ " + max + "\n你猜的數字：" + val;
+                //guessResult.textContent = "數字範圍：" + min + " ~ " + max + "，你猜的數字：" + val + "，目標數字：" + gameTargetNumber;
+            }
+            
         });
+
+        // 重新開始 按鈕點擊事件
+        restartBtn.addEventListener('click', function (event) {
+            // 將按鈕設為禁用
+            startBtn.disabled = false;
+            // 將數字範圍輸入框禁用
+            settingNumberMin.disabled = false;
+            settingNumberMax.disabled = false;
+            settingNumberRange.disabled = false;
+            // 設定 錯誤提示
+            startResult.textContent = "";
+            // 隱藏設定數字範圍
+            setting.style.display = 'block';
+            // 隱藏開始遊戲前文字
+            document.getElementById('beforeGame').style.display = 'block';
+            // 顯示開始遊戲後內容
+            document.getElementById('afterGame').style.display = 'none';
+            // 跳轉到遊戲區
+            document.getElementById('#setting').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // 讀取txt
+        function readTxt(file, min, max, callback) {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const text = e.target.result;
+                const numbers = [];
+                const ranges = [];
+                const lines = text.split(/\r?\n/);
+                
+                lines.forEach(line => {
+                    line = line.trim();
+
+                    // 正則：開頭是 Number:，後面是數字
+                    const match = line.match(/^Number:(\d+)/i);
+
+                    if (match) {
+                        const value = parseInt(match[1], 10);
+                        numbers.push(value);
+                    }
+
+                });
+
+                console.log(min + "~" + max + "," + numbers[0]);
+
+                if (numbers.length <= 0) {
+                    console.log("numbers.length > 0");
+                    callback(false);
+                }
+                else if (numbers[0] >= max || numbers[0] <= min) {
+                    console.log("numbers[0] >= max || numbers[0] <= min");
+                    callback(false);
+                }
+                else {
+                    console.log("true");
+                    gameTargetNumber = numbers[0];
+                    callback(true);
+                }               
+            };
+
+            reader.readAsText(file, "utf-8");
+        }
+
     </script>
 
 </body>
