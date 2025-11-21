@@ -10,10 +10,24 @@
             background: #f5f5f5;
         }
 
-        .hero {
+        .hero_home {
             background: linear-gradient(135deg, #4a90e2, #007aff);
             color: white;
-            padding: 80px 20px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .hero_setting {
+            background: linear-gradient(135deg, #8bb9f2, #66b3ff);
+            color: white;
+            padding: 20px 20px;
+            text-align: center;
+        }
+
+        .hero_game {
+            background: linear-gradient(135deg, #f5c000, #ffdd66);
+            color: black;
+            padding: 20px 20px;
             text-align: center;
         }
 
@@ -26,7 +40,7 @@
             cursor: pointer;
         }
 
-            .hover-card:hover {
+        .hover-card:hover {
                 transform: translateY(-5px) scale(1.05);
                 box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
             }
@@ -56,12 +70,143 @@
     </nav>
 
     <!-- Hero Section -->
-    <!--<section id="home" class="hero">
-        <h1>歡迎來到 冰糖物語 </h1>
-        <p>歡迎你加入這個大家庭！</p>
-        <a href="#games" class="btn btn-light btn-lg mt-3">查看小遊戲</a>
-    </section>-->
+    <section id="#home" class="hero_home">
+        <h1>終極密碼</h1>
+        <p>在指定的範圍中猜數字，並依猜的數字來縮小範圍，猜中數字的玩家即為輸家。</p>
+    </section>
+
+    <!-- Setting -->
+    <section id="#setting" class="hero_setting">
+        <h2 style="color: #000000;">設定數字範圍</h2>
+
+        <!-- 範圍輸入框 -->
+        <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
+            <input type="number" id="setting_number_min" class="form-control w-25 text-center" placeholder="最小值" value="0" />
+            <span class="fs-4">~</span>
+            <input type="number" id="setting_number_max" class="form-control w-25 text-center" placeholder="最大值" value="100" />
+        </div>
+
+        <div class="d-flex flex-column align-items-center gap-2 mt-4" style="max-width: 300px; margin: 0 auto;">
+            <h3 class="text-center" style="color: #000000;">目標數字&範圍<br>（僅限 .txt）:</h3>
+            <input type="file" class="form-control" accept=".txt">
+        </div>
+
+        <!-- 按鈕 -->
+        <div class="mt-3 text-center">
+            <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#settingsArea" aria-expanded="false" aria-controls="settingsArea">
+                其他設定
+            </button>
+        </div>
+
+        <!-- 設定區塊（預設隱藏） -->
+        <div class="collapse mt-3" id="settingsArea">
+            <div class="card card-body text-dark mx-auto" style="max-width: 400px;">
+                <!--<h5 class="text-center">設定區域</h5>-->
+                <!--<div class="mb-2">
+                <label>設定 B:</label>
+                <input type="text" class="form-control" placeholder="輸入設定 B">
+            </div>-->
+            </div>
+        </div>
+
+        <button class="btn btn-light btn-lg mt-3" id="startGameBtn">
+            開始遊戲
+        </button>
+
+        <!-- 顯示結果訊息 -->
+        <h2 class="text-center mt-3" style="color: #ff0000;" id="startResult"></h2>
+    </section>
+
+    <!-- Game -->
+    <section id="#game" class="hero_game">
+        <!-- 開始遊戲前 -->
+        <h3 id="beforeGame">開始遊戲前，請先設定數字範圍呦～</h3>
+
+        <!-- 開始遊戲後 -->
+        <div id="afterGame" style="display: none;">
+            <h1>！！開始猜數字！！</h1>
+            <h2>目前遊戲範圍</h2>
+
+            <!-- 目前數字範圍 -->
+            <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
+                <input type="number" id="game_number_min" class="form-control w-25 text-center" readonly />
+                <span class="fs-4">~</span>
+                <input type="number" id="game_number_max" class="form-control w-25 text-center" readonly />
+            </div>
+
+            <!-- 新增猜數字區 -->
+            <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
+                <input type="number" class="form-control w-25 text-center" id="guessInput" placeholder="輸入你的猜測" />
+                <button class="btn btn-primary" id="guessBtn">猜</button>
+            </div>
+
+            <!-- 顯示結果訊息 -->
+            <p class="text-center mt-3" id="guessResult"></p>
+
+        </div>
+
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 按鈕點擊事件 -->
+    <script>
+        // 選取物件
+        const settingNumberMin = document.getElementById('setting_number_min');
+        const settingNumberMax = document.getElementById('setting_number_max');
+        const startBtn = document.getElementById('startGameBtn');
+        const startResult = document.getElementById('startResult');
+
+        const gameNumberMin = document.getElementById('game_number_min');
+        const gameNumberMax = document.getElementById('game_number_max');
+        const guessInput = document.getElementById('guessInput');
+        const guessBtn = document.getElementById('guessBtn');       
+        const guessResult = document.getElementById('guessResult');
+
+        // 開始遊戲 按鈕點擊事件
+        startBtn.addEventListener('click', function (event) {
+            // 確認數字
+            if (settingNumberMin.value === "") {
+                startResult.textContent = "數字的最小值為空白！";
+            }
+            else if (settingNumberMax.value === "") {
+                startResult.textContent = "數字的最大值為空白！";
+            }
+
+
+            // 隱藏開始遊戲前文字
+            document.getElementById('beforeGame').style.display = 'none';
+            // 顯示開始遊戲後內容
+            document.getElementById('afterGame').style.display = 'block';
+            // 將按鈕設為禁用
+            startBtn.disabled = true;
+            // 將數字範圍輸入框禁用
+            settingNumberMin.disabled = true;
+            settingNumberMax.disabled = true;
+            // 改變按鈕文字
+            startBtn.textContent = '遊戲已開始';
+            // 設定 最小數字範圍
+            gameNumberMin.value = settingNumberMin.value;
+            // 設定 最大數字範圍
+            gameNumberMax.value = settingNumberMax.value;
+
+            // 跳轉到遊戲區
+            document.getElementById('#game').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // 猜 按鈕點擊事件
+        guessBtn.addEventListener('click', function (event) {
+            const min = parseInt(gameNumberMin.value, 10);
+            const max = parseInt(gameNumberMax.value, 10);
+            const val = parseInt(guessInput.value, 10);
+
+            if (val === "") {
+                guessResult.textContent = "數字範圍：" + min + " ~ " + max + "\n輸入框是空的！";
+            }
+
+            //guessResult.textContent = "數字範圍：" + min + " ~ " + max + "\n你猜的數字：" + val;
+        });
+    </script>
+
 </body>
 </html>
